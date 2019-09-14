@@ -1,9 +1,8 @@
 #include <iostream>
 #include <limits>
-#include <numeric>
 #include <stdexcept>
-#include <string>
 #include <vector>
+#include <string>
 
 const int ERR_SUCCEED = 0;
 const int ERR_INVALID_VALUE = 1;
@@ -236,6 +235,8 @@ char handleMenu(std::string str, std::vector<Student> &students, Dean &dean) {
     } else if (args[0] == "exit") {
         std::cout << "Goodby!" << std::endl;
         return ERR_EXIT_CODE;
+    } else {
+        return ERR_NO_SUCH_CMD;
     }
 
     return ERR_SUCCEED;
@@ -259,6 +260,10 @@ int main() {
             }
             case ERR_INVALID_ID: {
                 std::cout << "[EE] Student with such ID not found. Minimum ID is 0, maximum - " << Student::GLOBAL_ID - 1 << std::endl;
+                break;
+            }
+            case ERR_NO_SUCH_CMD: {
+                std::cout << "[EE] No such command\n";
                 break;
             }
         }
