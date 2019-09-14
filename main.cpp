@@ -1,14 +1,21 @@
 #include <iostream>
 #include <limits>
-#include <numeric>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
+// Input error constants
 const int ERR_SUCCEED = 0;
 const int ERR_INVALID_VALUE = 1;
 const int ERR_LOWER_BORDER_EXCEED = 2;
 const int ERR_UPPER_BORDER_EXCEED = 3;
+
+// Shell error constants
+const char ERR_INPUT_EMPTY = 4;
+const char ERR_NO_SUCH_CMD = 5;
+const char ERR_INVALID_ARGS = 6;
+const char ERR_INVALID_ID = 7;
+const char ERR_EXIT_CODE = 8;
 
 const char * localizeError(char error) {
   switch (error) {
@@ -134,12 +141,6 @@ bool askContinue(const char *message) {
     return false;
 }
 
-const char ERR_INPUT_EMPTY = 4;
-const char ERR_NO_SUCH_CMD = 5;
-const char ERR_INVALID_ARGS = 6;
-const char ERR_INVALID_ID = 7;
-const char ERR_EXIT_CODE = 8;
-
 void showHelp() {
     std::cout
             << "Help: \n"
@@ -242,11 +243,15 @@ int main() {
                 break;
             }
             case ERR_INVALID_ARGS: {
-                std::cout << "Invalid arguments passed. Enter ? to get help with commands\n";
+                std::cout << "[EE] Invalid arguments passed. Enter ? to get help with commands\n";
                 break;
             }
             case ERR_INVALID_ID: {
-                std::cout << "Student with such ID not found. Minimum ID is 0, maximum - " << Student::GLOBAL_ID - 1 << std::endl;
+                std::cout << "[EE] Student with such ID not found. Minimum ID is 0, maximum - " << Student::GLOBAL_ID - 1 << std::endl;
+                break;
+            }
+            case ERR_NO_SUCH_CMD: {
+                std::cout << "[EE] No such command.\n";
                 break;
             }
         }
