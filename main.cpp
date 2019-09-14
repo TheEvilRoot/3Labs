@@ -1,8 +1,8 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-#include <string>
 #include <vector>
+#include <string>
 
 // Input error constants
 const int ERR_SUCCEED = 0;
@@ -143,9 +143,9 @@ bool askContinue(const char *message) {
 
 void showHelp() {
     std::cout
-            << "Help: \n"
-            << "edit <student id> - to edit student's rate\n"
-            << "new - to add a new student\n"
+            << "Help: \n\n"
+            << "edit <student id> <new rate: optional> - to edit student's rate\n"
+            << "new <count: optional, default 1> - to add a new student\n"
             << "list - to get list of students\n"
             << "id <student id> - to get info about specific student\n"
             << "exit - to exit the program\n";
@@ -172,14 +172,19 @@ void editStudent(Student &st, Dean &dean) {
 }
 
 int parseInt(std::string str) {
-    int id;
     try {
-        id = std::stoi(str);
+        return std::stoi(str);
     } catch(std::invalid_argument) {
         return -1;
     }
+}
 
-    return id;
+float parseFloat(std::string str) {
+    try {
+        return std::stof(str);
+    } catch(std::invalid_argument) {
+        return -1;
+    }
 }
 
 char handleMenu(std::string str, std::vector<Student> &students, Dean &dean) {
@@ -198,13 +203,24 @@ char handleMenu(std::string str, std::vector<Student> &students, Dean &dean) {
         if (id < 0) return ERR_INVALID_ARGS;
         if (id < 0 || id >= Student::GLOBAL_ID) return ERR_INVALID_ID;
 
+        float newRate = -1;
+        if (args.size() >= 3) {
+            if ((newRate = parseFloat(args[2])) >= 0 && newRate <= 10) {
+                dean.changeRate(students[id], newRate);
+                std::cout << "Rate changed." << std::endl;
+                printStudent(students[id]);
+                return ERR_SUCCEED;
+            } else {
+                std::cout << "[EE] " << args[2] << " is invalid rate.\n";
+            }
+        }
         editStudent(students[id], dean);
     } else if (args[0] == "list") {
-      for (auto st : students) {
-        printStudent(st);
-      }
+        for (auto st : students) {
+            printStudent(st);
+        }
     } else if (args[0] == "id") {
-      if (args.size() < 2) {
+        if (args.size() < 2) {
             return ERR_INVALID_ARGS;
         }
 
@@ -225,6 +241,8 @@ char handleMenu(std::string str, std::vector<Student> &students, Dean &dean) {
     } else if (args[0] == "exit") {
         std::cout << "Goodby!" << std::endl;
         return ERR_EXIT_CODE;
+    } else {
+        return ERR_NO_SUCH_CMD;
     }
 
     return ERR_SUCCEED;
