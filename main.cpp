@@ -52,62 +52,63 @@ std::pair<char, T> enter(const char *message, T lower, T upper) {
 
 template <typename T>
 T handleInput(const char *message, T lower, T upper, const char * (*localize)(char) = &localizeError) {
-  std::pair<char, T> res;
+    std::pair<char, T> res;
 
-  while (true) {
-    res = enter(message, lower, upper);
-    if (res.first != ERR_SUCCEED) {
-      std::cout << "[EE] (" << (int) res.first << ") " << localize(res.first) << "\n";
-    } else break;
-  }
-  return res.second;
+    while (true) {
+        res = enter(message, lower, upper);
+        if (res.first != ERR_SUCCEED) {
+            std::cout << "[EE] (" << (int) res.first << ") " << localize(res.first) << "\n";
+        } else break;
+    }
+    return res.second;
 }
 
 std::string enterString(const char *message, bool includeWhitespaces = true) {
-  std::string string;
-  char c;
+    std::string string;
+    char c;
 
-  std::cout << message;
-  while ((c = std::cin.get())) {
-    if (c == '\n') break;
-    if (!includeWhitespaces && c == ' ') {
-      std::cin.ignore(std::numeric_limits<int>::max(), '\n');
-      break;
+    std::cout << message;
+    while ((c = std::cin.get())) {
+        if (c == '\n') break;
+
+        if (!includeWhitespaces && c == ' ') {
+            std::cin.ignore(std::numeric_limits<int>::max(), '\n');
+            break;
+        }
+        string += c;
     }
-    string += c;
-  }
 
-  return string;
+    return string;
 }
 
 class Student {
 private:
-  int id;
-  std::string name;
-  float rate;
+    int id;
+    std::string name;
+    float rate;
 public:
-  static int GLOBAL_ID;
+    static int GLOBAL_ID;
 
-  Student(std::string name, float rate) {
-    this->name = name;
-    this->rate = rate;
+    Student(std::string name, float rate) {
+        this->name = name;
+        this->rate = rate;
 
-    this->id = GLOBAL_ID++;
-  }
+        this->id = GLOBAL_ID++;
+    }
 
-  Student() {
-    this->id = GLOBAL_ID++;
-    this->name = enterString("Enter student's name: ");
-    this->rate = handleInput<float>("Enter student's rate[0-10]: ", std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  }
+    Student() {
+        this->id = GLOBAL_ID++;
+        this->name = enterString("Enter student's name: ");
+        this->rate = handleInput<float>("Enter student's rate[0-10]: ", 0, 10);
+    }
 
-  int getID() {
-    return id;
-  }
+    int getID() {
+        return id;
+    }
 
-  std::string getName() {
-    return name;
-  }
+    std::string getName() {
+        return name;
+    }
 
   friend void printStudent(Student &st);
   friend class Dean;
@@ -115,29 +116,35 @@ public:
 
 class Dean {
 public:
-  void  changeRate(Student &st, float newRate) {
-    st.rate = newRate;
-  }
+    void  changeRate(Student &st, float newRate) {
+        st.rate = newRate;
+    }
 };
 
 void printStudent(Student &st) {
-  std::cout << "Student [" << st.id << "] " << st.name << " has rate " << st.rate << std::endl;
+    std::cout << "Student [" << st.id << "] " << st.name << " has rate " << st.rate << std::endl;
 }
 
 int Student::GLOBAL_ID = 0;
 
-bool askContinue() {
-  return handleInput("Enter another student? (0 or 1)", 0, 1) == 1;
+bool askContinue(const char *message) {
+    auto inp = enterString(message);
+    if (inp.empty()) return false;
+    if (inp == "yes" || inp[0] == 'y') return true;
+    return false;
 }
 
 const char ERR_INPUT_EMPTY = 4;
 const char ERR_NO_SUCH_CMD = 5;
 const char ERR_INVALID_ARGS = 6;
+const char ERR_INVALID_ID = 7;
+const char ERR_EXIT_CODE = 8;
 
 void showHelp() {
     std::cout
             << "Help: \n"
             << "edit <student id> - to edit student's rate\n"
+            << "new - to add a new student\n"
             << "list - to get list of students\n"
             << "id <student id> - to get info about specific student\n"
             << "exit - to exit the program\n";
@@ -156,7 +163,25 @@ std::vector<std::string> splitString(std::string source, char sep) {
     return ret;
 }
 
-char handleMenuInput(std::string str) {
+void editStudent(Student &st, Dean &dean) {
+    float newRate = handleInput<float>("Enter new rate: ", 0, 10);
+    dean.changeRate(st, newRate);
+    std::cout << "Rate changed." << std::endl;
+    printStudent(st);
+}
+
+int parseInt(std::string str) {
+    int id;
+    try {
+        id = std::stoi(str);
+    } catch(std::invalid_argument) {
+        return -1;
+    }
+
+    return id;
+}
+
+char handleMenu(std::string str, std::vector<Student> &students, Dean &dean) {
     if (str.size() == 0) return ERR_INPUT_EMPTY;
 
     auto args = splitString(str, ' ');
@@ -167,47 +192,64 @@ char handleMenuInput(std::string str) {
         if (args.size() < 2) {
             return ERR_INVALID_ARGS;
         }
-        int id;
-        try {
-            id = std::stoi(args[1]);
-        } catch(std::invalid_argument) {
+
+        int id = parseInt(args[1]);
+        if (id < 0) return ERR_INVALID_ARGS;
+        if (id < 0 || id >= Student::GLOBAL_ID) return ERR_INVALID_ID;
+
+        editStudent(students[id], dean);
+    } else if (args[0] == "list") {
+      for (auto st : students) {
+        printStudent(st);
+      }
+    } else if (args[0] == "id") {
+      if (args.size() < 2) {
             return ERR_INVALID_ARGS;
         }
 
-        //editStudent()
+        int id = parseInt(args[1]);
+        if (id < 0) return ERR_INVALID_ARGS;
+        if (id < 0 || id >= Student::GLOBAL_ID) return ERR_INVALID_ID;
 
+        printStudent(students[id]);
+    } else if (args[0] == "new") {
+        int count = 1;
+        if (args.size() > 1) {
+            count = parseInt(args[1]);
+            if (count < 0 || (count > 10 && !askContinue("Really? That's a lot! Maybe 1? (yes[y] to continue): "))) count = 1;
+        }
+        for (; count > 0; count--) {
+            students.push_back(Student());
+        }
+    } else if (args[0] == "exit") {
+        std::cout << "Goodby!" << std::endl;
+        return ERR_EXIT_CODE;
     }
+
+    return ERR_SUCCEED;
 }
 
 int main() {
- std::vector<Student> students;
-
-  do {
-    students.push_back(Student());
-  } while (askContinue());
-
-  std::cout << "Got " << students.size() << " students." << std::endl;
-
-  Dean d;
-  do {
-      auto inputString = enterString("(? to get help) > ");
-
-      switch(handleMenuInput(inputString)) {
-
-      }
-    // std::cout << "Enter ID of student to change rate:" << std::endl;
-    // for (auto st : students)  {
-    //   std::cout << "[" << st.getID() << "] " << st.getName() << std::endl;
-    // }
-    // int cId = handleInput<int>("# ", 0, students.size() - 1);
-    // printStudent(students[cId]);
-    // float newRate = handleInput<float>("Enter new rate: ", 0, 10);
-    // d.changeRate(students[cId], newRate);
-    // std::cout << "Rate changed." << std::endl;
-    // printStudent(students[cId]);
-  } while (true);
-
- return 0;
+    std::vector<Student> students;
+    Dean dean;
+    do {
+        auto inputString = enterString("(? to get help) > ");
+        switch(handleMenu(inputString, students, dean)) {
+            case ERR_SUCCEED: { continue; break; }
+            case ERR_EXIT_CODE: return 0;
+            case ERR_INPUT_EMPTY: {
+                // std::cout << "Input is empty. Use ? to get help\n";
+                break;
+            }
+            case ERR_INVALID_ARGS: {
+                std::cout << "Invalid arguments passed. Enter ? to get help with commands\n";
+                break;
+            }
+            case ERR_INVALID_ID: {
+                std::cout << "Student with such ID not found. Minimum ID is 0, maximum - " << Student::GLOBAL_ID - 1 << std::endl;
+                break;
+            }
+        }
+    } while (true);
+    return 0;
 }
-
-
