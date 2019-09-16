@@ -144,11 +144,11 @@ bool askContinue(const char *message) {
 void showHelp() {
     std::cout
             << "Help: \n\n"
-            << "edit <student id> <new rate: optional> - to edit student's rate\n"
-            << "new <count: optional, default 1> - to add a new student\n"
-            << "list - to get list of students\n"
-            << "id <student id> - to get info about specific student\n"
-            << "exit - to exit the program\n";
+            << "\tedit <student id> <new rate: optional> - to edit student's rate\n"
+            << "\tnew <count: optional, default 1> - to add a new student\n"
+            << "\tlist - to get list of students\n"
+            << "\tid <student id> - to get info about specific student\n"
+            << "\texit - to exit the program\n";
 }
 
 std::vector<std::string> splitString(std::string source, char sep) {
