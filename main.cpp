@@ -1,5 +1,9 @@
+#include <cstdlib>
 #include <iostream>
+#include <istream>
 #include <limits>
+#include <cmath>
+#include <ostream>
 
 const int ERR_SUCCEED = 0;
 const int ERR_INVALID_VALUE = 1;
@@ -76,7 +80,27 @@ std::string enterString(const char *message, bool includeWhitespaces = true) {
   return string;
 }
 
+class ComplexNumber {
+private:
+    float real;
+    float im;
+public:
+    ComplexNumber(float real = 0, float im = 1) {
+        this->real = real;
+        this->im = im;
+    }
+
+    friend std::ostream & operator>>(std::ostream &str, ComplexNumber &num);
+};
+
+std::ostream & operator>>(std::ostream &str, ComplexNumber &num) {
+    str << num.real << (num.im < 0 ? " - " : " + ") << abs((int) num.im);
+    return str;
+}
+
 int main() {
- return 0;
+    ComplexNumber num(12, -2);
+    std::cout << num << std::endl;
+    return 0;
 }
 
