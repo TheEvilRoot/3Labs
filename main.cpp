@@ -77,6 +77,17 @@ std::string enterString(const char *message, bool includeWhitespaces = true) {
 }
 
 int main() {
- return 0;
+    std::string str1 = enterString("Enter first string: ");
+    std::string str2 = enterString("Enter second string: ");
+
+    if (str1.size() > str2.size()) {
+        std::cout << str1 << std::endl;
+    } else if (str2.size() > str1.size()) {
+        std::cout << str2 << std::endl;
+    } else {
+        std::cout << "String has equal lengths" << std::endl;
+    }
+
+    return 0;
 }
 
