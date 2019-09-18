@@ -8,12 +8,16 @@ ComplexNumber::ComplexNumber(float real, float im) {
     std::cout << "[D] Complex Number default constructor has called " << real << " " << im << "\n";
 }
 
-ComplexNumber::ComplexNumber(ComplexNumber &obj): real(obj.real), im(obj.getImaginary()) {
-    std::cout << "[D] Complex Number copy constructor has called " << real << " " << im << "\n";
-}
+ComplexNumber::ComplexNumber(const ComplexNumber &obj) : real(obj.real), im(obj.im) {}
 
 ComplexNumber::~ComplexNumber() {
     std::cout << "[D] Complex Number destructor has called " << real << " " << im << "\n";
+}
+
+ComplexNumber& ComplexNumber::operator=(const ComplexNumber& that) noexcept {
+    this->im = that.im;
+    this->real = that.real;
+    return *this;
 }
 
 float ComplexNumber::getReal() {
@@ -73,4 +77,9 @@ bool operator== (const ComplexNumber &c1, const ComplexNumber &c2) {
 
 bool operator!= (const ComplexNumber &c1, const ComplexNumber &c2) {
     return !(c1 == c2);
+}
+
+std::ostream& operator<<(std::ostream &out, ComplexNumber &num) {
+    out << num.getReal() << (num.getImaginary() < 0 ? " - " : " + ") << (num.getImaginary() < 0 ? -num.getImaginary() : num.getImaginary()) << "i";
+    return out;
 }
