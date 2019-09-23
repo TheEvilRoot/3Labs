@@ -77,6 +77,7 @@ std::string enterString(const char *message, bool includeWhitespaces = true) {
 }
 
 int main() {
+    // Lab-4
  return 0;
 }
 
