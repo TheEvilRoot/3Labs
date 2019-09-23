@@ -5,13 +5,13 @@
 ComplexNumber::ComplexNumber(float real, float im) {
     this->real = real;
     this->im = im;
-    std::cout << "[D] Complex Number default constructor has called " << real << " " << im << "\n";
+   // std::cout << "[D] Complex Number default constructor has called " << real << " " << im << "\n";
 }
 
 ComplexNumber::ComplexNumber(const ComplexNumber &obj) : real(obj.real), im(obj.im) {}
 
 ComplexNumber::~ComplexNumber() {
-    std::cout << "[D] Complex Number destructor has called " << real << " " << im << "\n";
+    // std::cout << "[D] Complex Number destructor has called " << real << " " << im << "\n";
 }
 
 ComplexNumber& ComplexNumber::operator=(const ComplexNumber& that) noexcept {

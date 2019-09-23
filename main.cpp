@@ -1,6 +1,5 @@
 #include <iostream>
 #include <limits>
-#include <ncurses>
 
 #include "complex_number.hpp"
 #include "input.hpp"
@@ -16,16 +15,21 @@ ComplexNumber enterComplexNumber() {
 }
 
 int main() {
-
-    getmaxyx(stdscr, 100, 100);
-
+    std::cout << "Enter first: \n";
     ComplexNumber num(enterComplexNumber());
+    std::cout << "Enter second: \n";
     ComplexNumber abc(enterComplexNumber());
 
-    std::cout << "z = " << num << "\n";
-    std::cout << "Z = " << abc << "\n";
+    std::cout << "first == second => " << ((num == abc) ? "yes" : "no") << "\n";
 
-    std::cout << "num == abc => " << (num == abc) << "\n";
-    std::cout << "num != abc => " << (num != abc) << "\n";
+    ComplexNumber delta(num - abc);
+    std::cout << "first - second = " << (delta) << "\n";
+
+    ComplexNumber sum(num + abc);
+    std::cout << "first + second = " << (sum) << "\n";
+
+    ComplexNumber mul(num * abc);
+    std::cout << "first * second = " << (mul) << "\n";
+
     return 0;
 }
