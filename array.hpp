@@ -13,6 +13,9 @@ public:
         this->ptr = nullptr;
         realloc(initial);
     }
+    ~Array() {
+        if (ptr) delete[] ptr;
+    }
 
     size_t push(int i) {
         if (size == lastIndex) {
@@ -62,6 +65,6 @@ private:
         delete[] ptr;
         this->ptr = newPtr;
         this->size = newSize;
-        printf("new size: %lu\n", newSize);
+       // printf("new size: %lu\n", newSize);
     }
 };
