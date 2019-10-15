@@ -1,5 +1,7 @@
 #include <iostream>
 #include <limits>
+#include <cmath>
+#include <ctime>
 
 const int ERR_SUCCEED = 0;
 const int ERR_INVALID_VALUE = 1;
@@ -76,7 +78,49 @@ std::string enterString(const char *message, bool includeWhitespaces = true) {
   return string;
 }
 
+template<typename T>
+void sort(T *array, size_t size, int (*comparator)(T*,T*)) {
+  for (size_t i = 0; i < size; i++) {
+    for (size_t j = 0; j < size - 1 - i; j++) {
+      if (comparator(&array[j], &array[j + 1]) > 0) {
+        std::swap(array[j], array[j + 1]);
+      }
+    }
+  }
+}
+
+struct Vector {
+  int x;
+  int y;
+  
+  float mag() {
+    return sqrt(x * x + y * y);
+  }
+};
+
 int main() {
- return 0;
+  Vector *vectors = new Vector[10];
+  srand(static_cast<unsigned int>(time(nullptr)));
+  for (int i = 0; i < 10; i++) {
+    vectors[i] = {rand() % 100, rand() % 20};
+  }
+  
+  for (int i = 0; i < 10; i++) {
+    std::cout << vectors[i].mag() << "\n";
+  }
+  
+  std::cout << "Sorting...\n";
+  
+  sort(vectors, 10,(int(*)(Vector*, Vector*))([](Vector* t, Vector* v) -> int {
+    if (t == nullptr && v == nullptr) return 0;
+    if (t == nullptr) return -1;
+    if (v == nullptr) return 1;
+    return t->mag() - v->mag();
+  }));
+  
+  for (int i = 0; i < 10; i++) {
+    std::cout << vectors[i].mag() << "\n";
+  }
+  return 0;
 }
 
