@@ -1,5 +1,7 @@
 #include <iostream>
 #include <limits>
+#include <vector>
+#include "shapes.hpp"
 
 const int ERR_SUCCEED = 0;
 const int ERR_INVALID_VALUE = 1;
@@ -76,7 +78,23 @@ std::string enterString(const char *message, bool includeWhitespaces = true) {
   return string;
 }
 
-int main() {
- return 0;
-}
 
+int main(int argc, const char * argv[]) {
+  std::vector<Polygon *> polygons;
+  
+  polygons.push_back(new Square({2, 3}, 10));
+  polygons.push_back(new Circle({4, 4}, 3));
+  
+  for (auto shape : polygons) {
+    std::cout << shape->toString() << "\n";
+    for (auto other : polygons) {
+      if (other != shape) {
+        try {
+          auto intersects = shape->isIntersects(other);
+          std::cout << "... " << (intersects ? "is " : "is not ") << "intercects with " << other->toString() << "\n";
+        } catch(std::logic_error &err) { /* No-op */ }
+      }
+    }
+  }
+  return 0;
+}
