@@ -6,3 +6,4 @@ CMakeLists.txt
 !*.hpp
 !*.c
 !*.h
+!dev

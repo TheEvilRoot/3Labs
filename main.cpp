@@ -1,15 +1,23 @@
 #include <iostream>
 
-#include "developer.h"
+#include "dev/developer.h"
 
 #include <map>
 #include <functional>
-#include <zlib.h>
 
-#include "api.h"
+#include "dev/developer.h"
+#include "dev/webdeveloper.h"
+#include "dev/nativedeveloper.h"
+#include "dev/serverdeveloper.h"
+#include "dev/frontenddeveloper.h"
+#include "dev/fullstackdeveloper.h"
+#include "dev/api.h"
 
 typedef std::vector<Developer *> Developers;
-struct Command { std::function<const char(Developers&, std::vector<std::string>&, InputHandler&)> func; std::string description; };
+struct Command {
+  std::function<const char(Developers&, std::vector<std::string>&, InputHandler&)> func;
+  std::string description;
+};
 typedef std::map<std::string, Command> CommandsMap;
 
 bool isValidDeveloperType(std::string type) {
@@ -76,7 +84,7 @@ void init(CommandsMap& commands) {
     }, "Add a new developer" } });
 
     commands.insert({ "list", { [&](Developers& developers, std::vector<std::string>&, InputHandler&) {
-        if (developers.size() == 0) {
+        if (developers.empty()) {
             std::cout << "Your developers list is empty now. Enter add <type> to add new developer\n";
         } else {
             for (const auto &dev : developers) {
@@ -136,6 +144,9 @@ bool handleExitCode(const char exitCode, int& lastExitCode, I18N& i18n) {
 }
 
 int main() {
+
+    std::cout.setf(std::ios::boolalpha);
+
     Developers developers = { };
     I18N i18n;
     CommandsMap commands;
@@ -145,6 +156,10 @@ int main() {
     init(commands);
 
     int lastExitCode = 0;
-    while (handleExitCode(run(developers, commands, lastExitCode, handler), lastExitCode, i18n));
+    while (handleExitCode(
+            run(developers, commands, lastExitCode, handler),
+            lastExitCode,
+            i18n
+            ));
     return 0;
 }
