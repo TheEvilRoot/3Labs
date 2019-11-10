@@ -1,2 +1,7 @@
 run
 cl.sh
+*
+!*.cpp
+!*.hpp
+!*.c
+!*.h

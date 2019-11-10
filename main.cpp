@@ -192,7 +192,7 @@ int printCmd(std::vector<std::string> &args, std::vector<Vector>& vectors) {
 }
 
 int sortCmd(std::vector<std::string> &args, std::vector<Vector>& vectors) {
-  if (vectors.size() == 0) {
+  if (vectors.empty()) {
     return ERR_NO_VECTORS;
   }
   sort(vectors.data(), vectors.size(), &vectorCompare);
@@ -224,7 +224,7 @@ int main() {
     if (trimmed.length() == 0) continue;
 
     auto args = splitString(trimmed);
-    if (args.size() < 1) continue;
+    if (args.empty()) continue;
 
     if (commands.find(args[0]) == commands.end()) {
       auto localizedMessage = i18n[ERR_NO_SUCH_CMD];
