@@ -15,7 +15,7 @@ class Polygon {
 protected:
   int vertexCount;
 public:
-  Polygon(int vCount);
+  explicit Polygon(int vCount);
   
   int getVertexCount() const;
   
@@ -58,7 +58,7 @@ public:
   
   double getArea() override;
   
-  virtual bool isIntersects(Polygon *other) override = 0;
+  bool isIntersects(Polygon *other) override = 0;
   
   std::string toString() override;
 };
