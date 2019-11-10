@@ -5,3 +5,4 @@ cl.sh
 !*.hpp
 !*.c
 !*.h
+!CMakeLists.txt
