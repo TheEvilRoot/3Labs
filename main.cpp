@@ -7,45 +7,50 @@
 
 #include "api.h"
 
+class StackUnderflow: public std::exception { };
+
 template<class T>
-class Array {
+struct StackNode {
+  StackNode<T> *next;
+  T data;
+};
+
+template<class T>
+class Stack {
 private:
-  std::vector<T> data;  // Live is too hard to use pointer based arrays
-                        // for `terminated` and `unexpected` hooks demonstration
+  StackNode<T> *top;
+  size_t size;
+
 public:
-  explicit Array(size_t initialSize = 0) {
-      data.resize(initialSize);
+  Stack(): top(nullptr), size(0) { }
+
+  void push(T t) {
+      auto *newTop = new StackNode<T>;
+      newTop->next = top;
+      newTop->data = t;
+      top = newTop;
+      size++;
   }
 
-  T& operator[](size_t index) throw() {
-      if (index >= data.size()) throw std::range_error(std::to_string(index) + " >= " + std::to_string(data.size()));
+  T pop() {
+    if (top == nullptr) throw StackUnderflow();
 
-      return data[index];
+    T ret = top->data;
+    top = top->next;
+    size--;
+
+    return ret;
   }
 
-  size_t push(T t) {
-      data.push_back(t);
-      return data.size() - 1;
+  bool empty() {
+      return size == 0;
   }
 
-  size_t getSize() {
-      return data.size();
-  }
 };
 
 struct Context {
-    Array<std::string> array;
+    Stack<std::string> stack;
 };
-
-void unexpectedHook() {
-    std::cerr << "\n[UNEXPECTED] Unexpected exception was thrown.\n";
-    std::terminate();
-}
-
-void terminationHook() {
-    std::cerr << "\n[TERMINATION] Unexpected error occurred. Terminating...\n";
-    exit(1);
-}
 
 typedef std::function<const char(Context&, std::vector<std::string>&, InputHandler&)> CommandCallback;
 
@@ -70,41 +75,27 @@ void init(CommandsMap& commands) {
         return ERR_EXIT_CODE;
     });
 
-    cmd(commands, "push", "Push new element to array", [&](Context& context, std::vector<std::string>& args, InputHandler& handler) {
+    cmd(commands, "push", "Push value to stack", [&](Context& context, std::vector<std::string>& args, InputHandler& handler) {
         std::string newElement;
         if (args.empty()) {
-            newElement = handler.enterString("Enter new element string: ");
+            newElement = handler.enterString("Enter new element to push to the stack: ");
         } else {
             newElement = args[0];
         }
 
-        std::cout << "New element added to position " << context.array.push(newElement) << "\n";
+        context.stack.push(newElement);
+        std::cout << "Pushed\n";
         return ERR_SUCCEED;
     });
 
-    cmd(commands, "get", "Get element from array by index", [&](Context& context, std::vector<std::string>& args, InputHandler& handler) -> char{
-        if (args.empty()) {
-            std::cout << "You should provide index to get element\n";
-            return ERR_INVALID_ARGS;
-        }
-
-        size_t index = std::atol(args[0].c_str());
-        std::cout << "Getting " << index << " element...";
-
-        std::string el = context.array[index];
-        std::cout << " " << el << "\n";
-        return ERR_SUCCEED;
-    });
-
-    cmd (commands, "size", "Get size of the array", [&](Context& context, std::vector<std::string>& args, InputHandler& handler) {
-        if (context.array.getSize() == 0){
-            std::cout << "Array is empty\n";
-        } else {
-            std::cout << "Size of the array: " << context.array.getSize() << "\n";
+    cmd (commands, "pop", "Pop value from stack", [&](Context& context, std::vector<std::string>& args, InputHandler& handler) {
+        try {
+            std::cout << "Element popped " << context.stack.pop() << "\n";
+        } catch (StackUnderflow &suf) {
+            std::cout << "Stack is empty!\n";
         }
         return ERR_SUCCEED;
     });
-
 }
 
 void init(I18N& i18n) {
@@ -154,9 +145,6 @@ bool handleExitCode(const char exitCode, int& lastExitCode, I18N& i18n) {
 }
 
 int main() {
-    std::set_unexpected(unexpectedHook);
-    std::set_terminate(terminationHook);
-
     CommandsMap commands;
     I18N i18n;
     Context context;
