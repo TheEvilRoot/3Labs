@@ -35,6 +35,7 @@ bool writeToOutFile(const std::string& content) {
     }
 
     file << content;
+    file.flush();
     file.close();
     return true;
 }
