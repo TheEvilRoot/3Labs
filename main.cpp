@@ -7,9 +7,45 @@
 
 #include "api.h"
 
-struct Context {
+template<class T>
+class Array {
+private:
+  std::vector<T> data;  // Live is too hard to use pointer based arrays
+                        // for `terminated` and `unexpected` hooks demonstration
+public:
+  Array(size_t initialSize = 0) {
+      data.resize(initialSize);
+  }
 
+  T& operator[](size_t index) throw() {
+      if (index >= data.size()) throw std::range_error(std::to_string(index) + " >= " + std::to_string(data.size()));
+
+      return data[index];
+  }
+
+  size_t push(T t) {
+      data.push_back(t);
+      return data.size() - 1;
+  }
+
+  size_t getSize() {
+      return data.size();
+  }
 };
+
+struct Context {
+    Array<std::string> array;
+};
+
+void unexpectedHook() {
+    std::cerr << "\n[UNEXPECTED] Unexpected exception was thrown.\n";
+    std::terminate();
+}
+
+void terminationHook() {
+    std::cerr << "\n[TERMINATION] Unexpected error occurred. Terminating...\n";
+    exit(1);
+}
 
 typedef std::function<const char(Context&, std::vector<std::string>&, InputHandler&)> CommandCallback;
 
@@ -32,6 +68,41 @@ void init(CommandsMap& commands) {
 
     cmd(commands, "exit", "Exit the program", [&](Context& context, std::vector<std::string>& args, InputHandler& handler) {
         return ERR_EXIT_CODE;
+    });
+
+    cmd(commands, "push", "Push new element to array", [&](Context& context, std::vector<std::string>& args, InputHandler& handler) {
+        std::string newElement;
+        if (args.empty()) {
+            newElement = handler.enterString("Enter new element string: ");
+        } else {
+            newElement = args[0];
+        }
+
+        std::cout << "New element added to position " << context.array.push(newElement) << "\n";
+        return ERR_SUCCEED;
+    });
+
+    cmd(commands, "get", "Get element from array by index", [&](Context& context, std::vector<std::string>& args, InputHandler& handler) -> char{
+        if (args.empty()) {
+            std::cout << "You should provide index to get element\n";
+            return ERR_INVALID_ARGS;
+        }
+
+        size_t index = std::atol(args[0].c_str());
+        std::cout << "Getting " << index << " element...";
+
+        std::string el = context.array[index];
+        std::cout << " " << el << "\n";
+        return ERR_SUCCEED;
+    });
+
+    cmd (commands, "size", "Get size of the array", [&](Context& context, std::vector<std::string>& args, InputHandler& handler) {
+        if (context.array.getSize() == 0){
+            std::cout << "Array is empty\n";
+        } else {
+            std::cout << "Size of the array: " << context.array.getSize() << "\n";
+        }
+        return ERR_SUCCEED;
     });
 
 }
@@ -83,6 +154,9 @@ bool handleExitCode(const char exitCode, int& lastExitCode, I18N& i18n) {
 }
 
 int main() {
+    std::set_unexpected(unexpectedHook);
+    std::set_terminate(terminationHook);
+
     CommandsMap commands;
     I18N i18n;
     Context context;
