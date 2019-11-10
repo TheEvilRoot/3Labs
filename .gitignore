@@ -2,9 +2,9 @@ run
 cl.sh
 cmake-build-debug
 .idea
-CMakeLists.txt
 *
 !*.cpp
 !*.hpp
 !*.c
 !*.h
+!CMakeLists.txt
