@@ -6,4 +6,5 @@ CMakeLists.txt
 !*.hpp
 !*.c
 !*.h
-!dev
+!dev/
+!CMakeLists.txt
