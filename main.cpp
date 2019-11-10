@@ -13,7 +13,7 @@ private:
   std::vector<T> data;  // Live is too hard to use pointer based arrays
                         // for `terminated` and `unexpected` hooks demonstration
 public:
-  Array(size_t initialSize = 0) {
+  explicit Array(size_t initialSize = 0) {
       data.resize(initialSize);
   }
 
