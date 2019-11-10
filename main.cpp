@@ -80,12 +80,24 @@ std::string enterString(const char *message, bool includeWhitespaces = true) {
 
 
 int main(int argc, const char * argv[]) {
-  std::vector<Polygon *> polygons;
-  
-  polygons.push_back(new Square({2, 3}, 10));
-  polygons.push_back(new Circle({4, 4}, 3));
-  
-  for (auto shape : polygons) {
+    std::vector<Polygon *> polygons;
+
+    std::cout << "Enter square position: \n";
+    int sx = handleInput<int>("\tx: ", std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+    int sy = handleInput<int>("\ty: ", std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+
+    auto edge = handleInput<float>("Enter square's edge length: ", 0, std::numeric_limits<float>::max());
+
+    std::cout << "Enter circle position: \n";
+    int cx = handleInput<int>("\tx: ", std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+    int cy = handleInput<int>("\ty: ", std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+
+    auto radius = handleInput<float>("Enter circle's radius: ", 0, std::numeric_limits<float>::max());
+
+    polygons.push_back(new Square({sx, sy}, edge));
+    polygons.push_back(new Circle({cx, cy}, radius));
+
+    for (auto shape : polygons) {
     std::cout << shape->toString() << "\n";
     for (auto other : polygons) {
       if (other != shape) {
@@ -95,6 +107,6 @@ int main(int argc, const char * argv[]) {
         } catch(std::logic_error &err) { /* No-op */ }
       }
     }
-  }
-  return 0;
+    }
+    return 0;
 }
