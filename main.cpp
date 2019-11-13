@@ -7,6 +7,7 @@
 #include <string>
 
 #include "api.h"
+#include "student.h"
 
 struct FileContext {
   std::fstream file;
@@ -27,19 +28,6 @@ void cmd(CommandsMap &commands, const std::string& name, std::string description
     });
 }
 
-bool writeToOutFile(const std::string& content) {
-    std::ofstream file("out.txt", std::ios::out | std::ios::trunc);
-    if (!file.is_open()) {
-        std::cout << "Failed to open output file (out.txt)\n";
-        return false;
-    }
-
-    file << content;
-    file.flush();
-    file.close();
-    return true;
-}
-
 void init(CommandsMap& commands) {
     cmd(commands, "help", "Display help message", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler){
         return ERR_SUCCEED;
@@ -49,103 +37,63 @@ void init(CommandsMap& commands) {
         return ERR_EXIT_CODE;
     });
 
-    cmd(commands, "open", "Open file", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) -> char{
-        if (context.file.is_open()) {
-            std::cout << "File " << context.fileName << " already opened. Use 'close' command to close file.\n";
-            return ERR_SUCCEED;
-        }
+    cmd(commands, "test", "test", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
+        std::ofstream file("file.bin");
+        std::ofstream tfile("file.txt");
 
-        if (args.empty()) {
-            std::cout << "You should provide filename to open file\n";
-            std::cout << "open <file>\n";
-            return ERR_INVALID_ARGS;
-        }
+        Student st(123, "Arya Stark", "KSiS", 2);
+        st.toBinaryFile(file);
+        st.toTextFile(tfile);
 
-        auto fileName = args[0];
-        context.file.open(fileName, std::fstream::in);
+        file.flush();
+        tfile.flush();
 
-        if (!context.file.is_open()) {
-            std::cout << "Failed to open file " << fileName << "\n";
-            return ERR_SUCCEED;
-        }
+        file.close();
+        tfile.close();
 
-        std::cout << "File opened!\n";
-        context.file.seekg(0, std::fstream::end);
-        std::cout << "File length: " << context.file.tellg() << "\n";
-        context.file.seekg(0, std::fstream::beg);
-
-        return ERR_SUCCEED;
-    });
-
-    cmd (commands, "close", "Close file", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) -> char {
-        if (!context.file.is_open()) {
-            std::cout << "File not opened yet\n";
-            return ERR_SUCCEED;
-        }
-
-        context.file.close();
-        context.fileName = "";
-
-        std::cout << "File closed\n";
-        return ERR_SUCCEED;
-    });
-
-    cmd (commands, "count", "Count specified symbols in file", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) -> char {
-        if (!context.file.is_open()) {
-          std::cout << "File not opened yet\n";
-          return ERR_SUCCEED;
-        }
-
-        char charOfInterest = 0;
-        if (args.empty()) {
-            auto str = handler.enterString("Enter symbol to count in file: ");
-            if (str.empty()) return ERR_INVALID_ARGS;
-            charOfInterest = str[0];
-        } else {
-            charOfInterest = args[0][0];
-        }
-        // asserts charOfInterest is not 0
-
-        context.file.clear();
-        context.file.seekg(0, std::fstream::beg);
-        size_t count = 0;
-        while (!context.file.eof()) {
-            int i = 0;
-            if ((i = context.file.get()) < 0) { break; }
-            if (i  == charOfInterest) count++;
-        }
-
-        std::cout << "Symbol '" << charOfInterest << "' appears in file " << count << " times\n";
-
-        if (writeToOutFile(std::to_string(count))) {
-          std::cout << "Result successfully stored to out.txt\n";
-        }
-
-        return ERR_SUCCEED;
-    });
-
-    cmd (commands, "words", "Count words in file", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) -> char {
-      if (!context.file.is_open()) {
-          std::cout << "File not opened yet\n";
-          return ERR_SUCCEED;
-      }
-
-      context.file.clear();
-      context.file.seekg(0, std::fstream::beg);
-
-      size_t count = 0;
-      while (!context.file.eof()) {
-          int i = 0;
-          if ((i = context.file.get()) < 0) { break; }
-          if (!((i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z') || (i >= '0' &&  i <= '9'))) count++;
-      }
-
-      std::cout << "In file " << count + 1 << " words\n";
-
-      if (writeToOutFile(std::to_string(count + 1))) {
-          std::cout << "Result successfully stored to out.txt\n";
-      }
       return ERR_SUCCEED;
+    });
+
+    cmd(commands, "wb", "Write new student to binary database", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
+        std::cout << "Enter new student's data: \n";
+        Student st = Student::fromInputHandler(handler);
+
+        std::cout << "Writing student \n" << st << "\n ... to binary database\n";
+
+        std::ofstream file("database.bin", std::ios::binary | std::ios::app);
+
+        if(!file.is_open()) {
+            std::cout << "Unable to open file...\n";
+            return 99;
+        }
+
+        st.toBinaryFile(file);
+
+        std::cout << "Done.\n";
+        return ERR_SUCCEED;
+    });
+
+    cmd(commands, "rb", "Read binary database", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
+        std::ifstream file("file.bin", std::ios::binary);
+        if(!file.is_open()) {
+          std::cout << "Unable to open file...\n";
+          return 99;
+        }
+
+        if (args.empty() || args[0] != "-r") {
+            while (!file.eof()) {
+                try {
+                    Student st = Student::fromBinary(file);
+                    std::cout << st << "\n";
+                } catch (...) {
+                    std::cout << "Unable to get student...\n";
+                    break;
+                }
+            }
+        } else {
+            // TODO: I don't know!
+        }
+        return ERR_SUCCEED;
     });
 
 }
