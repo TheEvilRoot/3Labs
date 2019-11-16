@@ -28,42 +28,25 @@ void cmd(CommandsMap &commands, const std::string& name, std::string description
     });
 }
 
-char writeBinary(InputHandler& handler) {
+char writeFile(InputHandler& handler, bool binary) {
     std::cout << "Enter new student's data: \n";
     Student st = Student::fromInputHandler(handler);
 
-    std::cout << "Writing student \n" << st << "\n ... to binary database\n";
+    std::cout << "Writing student \n" << st << "\n ... to " <<  (binary ? "binary" : "text") << " database\n";
 
-    std::ofstream file("database.bin", std::ios::binary | std::ios::app);
+    std::ofstream file(std::string("database.") + (binary ? "bin" : "txt"), (binary ? std::ios::binary : 0) | std::ios::app);
 
     if(!file.is_open()) {
         std::cout << "Unable to open file...\n";
         return 99;
     }
 
-    st.toBinaryFile(file);
+    if (binary)
+        st.toBinaryFile(file);
+    else st.toTextFile(file);
 
     std::cout << "Done.\n";
 
-    return ERR_SUCCEED;
-}
-
-char writeText(InputHandler& handler) {
-    std::cout << "Enter new student's data: \n";
-    Student st = Student::fromInputHandler(handler);
-
-    std::cout << "Writing student \n" << st << "\n ... to binary database\n";
-
-    std::ofstream file("database.txt", std::ios::app);
-
-    if(!file.is_open()) {
-        std::cout << "Unable to open file...\n";
-        return 99;
-    }
-
-    st.toTextFile(file);
-
-    std::cout << "Done.\n";
     return ERR_SUCCEED;
 }
 
@@ -79,107 +62,69 @@ char reversedBinary(std::ifstream& file, InputHandler& handler) {
     return ERR_SUCCEED;
 }
 
-char readBinary(InputHandler& handler, bool reversed) {
-    std::ifstream file("database.bin", std::ios::binary);
-    if(!file.is_open()) {
-        std::cout << "Binary database not exists yet or file not accessible\n";
-        return ERR_SUCCEED;
-    }
+char reversedText(std::ifstream& file, InputHandler& handler) {
+    // 1. Go to the end of the file skipping \n and \0 (-2 position from the end)
+    int i = -2;
+    file.seekg(i, std::ios::end);
 
-    if (!reversed) {
-        while (!file.eof()) {
-            try {
-                Student st = Student::fromBinary(file);
-                std::cout << st << "\n";
-            } catch(std::range_error&) {
-                break;
-            } catch (...) {
-                std::cout << "Unable to get student...\n";
-                break;
-            }
-        }
-    } else {
-        return reversedBinary(file, handler);
-    }
+    do {
+        // 2. Go back until \n or until start of file (it fill be first (last for us) student)
+        int c = 0;
+        while (file.tellg() > 0 && (c = file.get()) != '\n') file.seekg(--i, std::ios::end);
+        // 3. Set position
+        file.seekg(i, std::ios::end);
+        // 4. Read student
+        Student st = Student::fromText(file, false);
+        std::cout << st << "\n";
+
+        // 5. Go back to 1 position from start of current student
+        file.seekg(--i, std::ios::end);
+        // Until reach start of the file
+    } while (file.tellg() > 0);
+
     return ERR_SUCCEED;
 }
 
-char readText(InputHandler& handler, bool reversed) {
-    std::ifstream file("database.txt");
+char reversedTextBinary(std::ifstream& file, InputHandler& handler) {
+    // 1. Go to the end of the file skipping \n and \0 (-2 position from the end)
+    int i = -2;
+    file.seekg(i, std::ios::end);
+
+    do {
+        // 2. Go back until \n or until start of file (it fill be first (last for us) student)
+        int c = 0;
+        int fix = 0;
+        while (!(fix = !(file.tellg() > 0)) && (c = file.get()) != '\n') file.seekg(--i, std::ios::end);
+        // 3. Set position with some magic
+        file.seekg(i + 1 - fix, std::ios::end);
+        // 4. Read student
+        Student st = Student::fromText(file, true);
+        std::cout << st << "\n";
+
+        // 5. Go back to 1 position from start of current student
+        file.seekg(--i, std::ios::end);
+        // Until reach start of the file
+    } while (file.tellg() > 0);
+    return ERR_SUCCEED;
+}
+
+char readFile(InputHandler& handler, bool reversed, bool binary, const std::function<Student(std::ifstream&)>& fromFunction , char(*reverseFunction)(std::ifstream&, InputHandler&)) {
+    std::ifstream file(std::string("database.") + (binary ? "bin" : "txt"), (binary ? std::ios::binary : std::ios::in));
     if(!file.is_open()) {
-        std::cout << "Text database not exists yet or file not accessible\n";
+        std::cout << (binary ? "Binary" : "Text") << " database not exists yet or file not accessible\n";
         return ERR_SUCCEED;
     }
-
     if (!reversed) {
         while (!file.eof()) {
             try {
-                Student st = Student::fromText(file);
+                Student st = fromFunction(file);
                 std::cout << st << "\n";
             } catch(...) {
                 break;
             }
         }
     } else {
-        // 1. Go to the end of the file skipping \n and \0 (-2 position from the end)
-        int i = -2;
-        file.seekg(i, std::ios::end);
-
-        do {
-            // 2. Go back until \n or until start of file (it fill be first (last for us) student)
-            int c = 0;
-            while (file.tellg() > 0 && (c = file.get()) != '\n') file.seekg(--i, std::ios::end);
-            // 3. Set position
-            file.seekg(i, std::ios::end);
-            // 4. Read student
-            Student st = Student::fromText(file, false);
-            std::cout << st << "\n";
-
-            // 5. Go back to 1 position from start of current student
-            file.seekg(--i, std::ios::end);
-            // Until reach start of the file
-        } while (file.tellg() > 0);
-    }
-
-    return ERR_SUCCEED;
-}
-
-char readTextWithBinary(InputHandler& handler, bool reversed) {
-    std::ifstream file("database.txt");
-    if(!file.is_open()) {
-        std::cout << "Text database not exists yet or file not accessible\n";
-        return ERR_SUCCEED;
-    }
-
-    if (!reversed) {
-        while (!file.eof()) {
-            try {
-                Student st = Student::fromText(file, true);
-                std::cout << st << "\n";
-            } catch(...) {
-                break;
-            }
-        }
-    } else {
-        // 1. Go to the end of the file skipping \n and \0 (-2 position from the end)
-        int i = -2;
-        file.seekg(i, std::ios::end);
-
-        do {
-            // 2. Go back until \n or until start of file (it fill be first (last for us) student)
-            int c = 0;
-            int fix = 0;
-            while (!(fix = !(file.tellg() > 0)) && (c = file.get()) != '\n') file.seekg(--i, std::ios::end);
-            // 3. Set position with some magic
-            file.seekg(i + 1 - fix, std::ios::end);
-            // 4. Read student
-            Student st = Student::fromText(file, true);
-            std::cout << st << "\n";
-
-            // 5. Go back to 1 position from start of current student
-            file.seekg(--i, std::ios::end);
-            // Until reach start of the file
-        } while (file.tellg() > 0);
+        return reverseFunction(file, handler);
     }
     return ERR_SUCCEED;
 }
@@ -194,16 +139,18 @@ void init(CommandsMap& commands) {
     });
 
     cmd(commands, "write", "Write new student to binary database. write -t|-b", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
-        if (args.empty() || args[0] == "-t") {
-            std::cout << "Writing in text-based database...\n";
-            return writeText(handler);
-        } else if (args[0] == "-b") {
-            std::cout << "Writing in binary-based database...\n";
-            return writeBinary(handler);
-        } else {
+        char mode = 0;
+        for (const auto& arg : args) {
+            if (arg == "-t") mode = 't';
+            if (arg == "-b") mode = 'b';
+        }
+
+        if (mode == 0) {
             std::cout << "Use -t to use text-based database and -b to binary database\n";
             return ERR_INVALID_ARGS;
         }
+
+        return writeFile(handler, mode == 'b');
     });
 
     cmd(commands, "read", "Read database. read -t|-b|-B -r", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
@@ -216,16 +163,10 @@ void init(CommandsMap& commands) {
             if (arg == "-B") mode = 'B';
         }
 
-        if (mode == 't') {
-            std::cout << "Reading text-based database" << (reversed ? " in reversed mode" : "") << "\n";
-            return readText(handler, reversed);
-        } else if (mode == 'b') {
-            std::cout << "Reading binary-based database" << (reversed ? " in reversed mode" : "") << "\n";
-            return readBinary(handler, reversed);
-        } else {
-            std::cout << "Reading text-based database using binary method" << (reversed ? " in reversed mode" : "") << "\n";
-            return readTextWithBinary(handler, reversed);
-        }
+        return readFile(handler, reversed, mode == 'b', [&](std::ifstream& file) {
+           if (mode == 'b') return Student::fromBinary(file);
+           return Student::fromText(file, mode == 'B');
+        }, mode == 'b' ? reversedBinary : (mode == 'B' ? reversedTextBinary : reversedText));
     });
 
     cmd(commands, "drop", "Drop database -t|-b", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
