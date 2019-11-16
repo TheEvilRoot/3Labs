@@ -73,18 +73,23 @@ public:
 
       size_t id = 0;
       file.read((char *) &id, sizeof(id));
+      if (file.eof()) throw std::range_error("Unexpected eof while reading student");
 
       size_t nameLength = 0;
       file.read((char *) &nameLength, sizeof(size_t));
+      if (file.eof()) throw std::range_error("Unexpected eof while reading student");
 
       char *nameBytes = new char[nameLength];
       file.read(nameBytes, nameLength);
+      if (file.eof()) throw std::range_error("Unexpected eof while reading student");
 
       size_t facLength = 0;
       file.read((char *) &facLength, sizeof(size_t));
+      if (file.eof()) throw std::range_error("Unexpected eof while reading student");
 
       char *facBytes = new char[facLength];
       file.read(facBytes, facLength);
+      if (file.eof()) throw std::range_error("Unexpected eof while reading student");
 
       size_t semester = 0;
       file.read((char *) &semester, sizeof(semester));
@@ -128,7 +133,7 @@ public:
                                       std::numeric_limits<size_t>::max());
       std::string name = handler.enterString("\tName:");
       std::string faculty = handler.enterString("\tFaculty: ");
-      size_t semester = handler.handleInput("Semester: ", 1, 8);
+      size_t semester = handler.handleInput("\tSemester: ", 1, 8);
 
       return Student(id, name, faculty, semester);
   }
@@ -153,25 +158,25 @@ private:
       size_t id = 0;
       int c;
       while ((c = file.get()) != '\t') {
-          if (c < 0 || !isNumber(c)) throw std::logic_error("Invalid text file notation");
-          id = (id * 10) + (c - '0');
+          if (c < 0 || !isNumber(c)) throw std::logic_error("Invalid text file notation while reading id: " + std::to_string((char) c));
+          id = (id * 10) + (c - '0'); // Aggressive char->int transformation
       }
 
       std::string name;
       while ((c = file.get()) != '\t') {
-          if (c < 0) throw std::logic_error("Invalid text file notation");
+          if (c < 0) throw std::logic_error("Invalid text file notation while reading name");
           name += (char) c;
       }
 
       std::string fac;
       while ((c = file.get()) != '\t') {
-          if (c < 0) throw std::logic_error("Invalid text file notation");
+          if (c < 0) throw std::logic_error("Invalid text file notation while reading faculty");
           fac += (char) c;
       }
 
       size_t semester = 0;
       while ((c = file.get()) != '\n') {
-          if (c < 0 || !isNumber(c)) throw std::logic_error("Invalid text file notation");
+          if (c < 0 || !isNumber(c)) throw std::logic_error("Invalid text file notation while reading semester");
           semester = (semester * 10) + (c - '0');
       }
 
@@ -187,13 +192,13 @@ private:
       char c = 0;
       std::string name;
       while ((c = file.get()) != '\t') {
-          if (c < 0) throw std::logic_error("Invalid text file notation");
+          if (c < 0) throw std::logic_error("Invalid text file notation while reading name");
           name += (char) c;
       }
 
       std::string fac;
       while((c = file.get()) != '\t') {
-          if (c < 0) throw std::logic_error("Invalid text file notation");
+          if (c < 0) throw std::logic_error("Invalid text file notation while reading faculty");
           fac += (char) c;
       }
 

@@ -28,6 +28,162 @@ void cmd(CommandsMap &commands, const std::string& name, std::string description
     });
 }
 
+char writeBinary(InputHandler& handler) {
+    std::cout << "Enter new student's data: \n";
+    Student st = Student::fromInputHandler(handler);
+
+    std::cout << "Writing student \n" << st << "\n ... to binary database\n";
+
+    std::ofstream file("database.bin", std::ios::binary | std::ios::app);
+
+    if(!file.is_open()) {
+        std::cout << "Unable to open file...\n";
+        return 99;
+    }
+
+    st.toBinaryFile(file);
+
+    std::cout << "Done.\n";
+
+    return ERR_SUCCEED;
+}
+
+char writeText(InputHandler& handler) {
+    std::cout << "Enter new student's data: \n";
+    Student st = Student::fromInputHandler(handler);
+
+    std::cout << "Writing student \n" << st << "\n ... to binary database\n";
+
+    std::ofstream file("database.txt", std::ios::app);
+
+    if(!file.is_open()) {
+        std::cout << "Unable to open file...\n";
+        return 99;
+    }
+
+    st.toTextFile(file);
+
+    std::cout << "Done.\n";
+    return ERR_SUCCEED;
+}
+
+char reversedBinary(std::ifstream& file, InputHandler& handler) {
+    Student st(0, "", "", 0);
+    try {
+         st = Student::fromBinary(file);
+    } catch(std::range_error&) {
+        return ERR_SUCCEED;
+    }
+    reversedBinary(file, handler);
+    std::cout << st << "\n";
+    return ERR_SUCCEED;
+}
+
+char readBinary(InputHandler& handler, bool reversed) {
+    std::ifstream file("database.bin", std::ios::binary);
+    if(!file.is_open()) {
+        std::cout << "Binary database not exists yet or file not accessible\n";
+        return ERR_SUCCEED;
+    }
+
+    if (!reversed) {
+        while (!file.eof()) {
+            try {
+                Student st = Student::fromBinary(file);
+                std::cout << st << "\n";
+            } catch(std::range_error&) {
+                break;
+            } catch (...) {
+                std::cout << "Unable to get student...\n";
+                break;
+            }
+        }
+    } else {
+        return reversedBinary(file, handler);
+    }
+    return ERR_SUCCEED;
+}
+
+char readText(InputHandler& handler, bool reversed) {
+    std::ifstream file("database.txt");
+    if(!file.is_open()) {
+        std::cout << "Text database not exists yet or file not accessible\n";
+        return ERR_SUCCEED;
+    }
+
+    if (!reversed) {
+        while (!file.eof()) {
+            try {
+                Student st = Student::fromText(file);
+                std::cout << st << "\n";
+            } catch(...) {
+                break;
+            }
+        }
+    } else {
+        // 1. Go to the end of the file skipping \n and \0 (-2 position from the end)
+        int i = -2;
+        file.seekg(i, std::ios::end);
+
+        do {
+            // 2. Go back until \n or until start of file (it fill be first (last for us) student)
+            int c = 0;
+            while (file.tellg() > 0 && (c = file.get()) != '\n') file.seekg(--i, std::ios::end);
+            // 3. Set position
+            file.seekg(i, std::ios::end);
+            // 4. Read student
+            Student st = Student::fromText(file, false);
+            std::cout << st << "\n";
+
+            // 5. Go back to 1 position from start of current student
+            file.seekg(--i, std::ios::end);
+            // Until reach start of the file
+        } while (file.tellg() > 0);
+    }
+
+    return ERR_SUCCEED;
+}
+
+char readTextWithBinary(InputHandler& handler, bool reversed) {
+    std::ifstream file("database.txt");
+    if(!file.is_open()) {
+        std::cout << "Text database not exists yet or file not accessible\n";
+        return ERR_SUCCEED;
+    }
+
+    if (!reversed) {
+        while (!file.eof()) {
+            try {
+                Student st = Student::fromText(file, true);
+                std::cout << st << "\n";
+            } catch(...) {
+                break;
+            }
+        }
+    } else {
+        // 1. Go to the end of the file skipping \n and \0 (-2 position from the end)
+        int i = -2;
+        file.seekg(i, std::ios::end);
+
+        do {
+            // 2. Go back until \n or until start of file (it fill be first (last for us) student)
+            int c = 0;
+            int fix = 0;
+            while (!(fix = !(file.tellg() > 0)) && (c = file.get()) != '\n') file.seekg(--i, std::ios::end);
+            // 3. Set position with some magic
+            file.seekg(i + 1 - fix, std::ios::end);
+            // 4. Read student
+            Student st = Student::fromText(file, true);
+            std::cout << st << "\n";
+
+            // 5. Go back to 1 position from start of current student
+            file.seekg(--i, std::ios::end);
+            // Until reach start of the file
+        } while (file.tellg() > 0);
+    }
+    return ERR_SUCCEED;
+}
+
 void init(CommandsMap& commands) {
     cmd(commands, "help", "Display help message", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler){
         return ERR_SUCCEED;
@@ -37,65 +193,74 @@ void init(CommandsMap& commands) {
         return ERR_EXIT_CODE;
     });
 
-    cmd(commands, "test", "test", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
-        std::ofstream file("file.bin");
-        std::ofstream tfile("file.txt");
-
-        Student st(123, "Arya Stark", "KSiS", 2);
-        st.toBinaryFile(file);
-        st.toTextFile(tfile);
-
-        file.flush();
-        tfile.flush();
-
-        file.close();
-        tfile.close();
-
-      return ERR_SUCCEED;
-    });
-
-    cmd(commands, "wb", "Write new student to binary database", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
-        std::cout << "Enter new student's data: \n";
-        Student st = Student::fromInputHandler(handler);
-
-        std::cout << "Writing student \n" << st << "\n ... to binary database\n";
-
-        std::ofstream file("database.bin", std::ios::binary | std::ios::app);
-
-        if(!file.is_open()) {
-            std::cout << "Unable to open file...\n";
-            return 99;
-        }
-
-        st.toBinaryFile(file);
-
-        std::cout << "Done.\n";
-        return ERR_SUCCEED;
-    });
-
-    cmd(commands, "rb", "Read binary database", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
-        std::ifstream file("file.bin", std::ios::binary);
-        if(!file.is_open()) {
-          std::cout << "Unable to open file...\n";
-          return 99;
-        }
-
-        if (args.empty() || args[0] != "-r") {
-            while (!file.eof()) {
-                try {
-                    Student st = Student::fromBinary(file);
-                    std::cout << st << "\n";
-                } catch (...) {
-                    std::cout << "Unable to get student...\n";
-                    break;
-                }
-            }
+    cmd(commands, "write", "Write new student to binary database. write -t|-b", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
+        if (args.empty() || args[0] == "-t") {
+            std::cout << "Writing in text-based database...\n";
+            return writeText(handler);
+        } else if (args[0] == "-b") {
+            std::cout << "Writing in binary-based database...\n";
+            return writeBinary(handler);
         } else {
-            // TODO: I don't know!
+            std::cout << "Use -t to use text-based database and -b to binary database\n";
+            return ERR_INVALID_ARGS;
         }
+    });
+
+    cmd(commands, "read", "Read database. read -t|-b|-B -r", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
+        bool reversed = false;
+        char mode = 't';
+
+        for (const auto& arg : args) {
+            if (arg == "-r") reversed = true;
+            if (arg == "-b") mode = 'b';
+            if (arg == "-B") mode = 'B';
+        }
+
+        if (mode == 't') {
+            std::cout << "Reading text-based database" << (reversed ? " in reversed mode" : "") << "\n";
+            return readText(handler, reversed);
+        } else if (mode == 'b') {
+            std::cout << "Reading binary-based database" << (reversed ? " in reversed mode" : "") << "\n";
+            return readBinary(handler, reversed);
+        } else {
+            std::cout << "Reading text-based database using binary method" << (reversed ? " in reversed mode" : "") << "\n";
+            return readTextWithBinary(handler, reversed);
+        }
+    });
+
+    cmd(commands, "drop", "Drop database -t|-b", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
+        char mode = 't';
+
+        for (const auto& arg : args) {
+          if (arg == "-t") mode = 't';
+          if (arg == "-b") mode = 'b';
+        }
+
+        if (mode == 't') {
+            remove("database.txt");
+        } else {
+            remove("database.bin");
+        }
+        std::cout << (mode == 't' ? "Text-based" : "Binary-based") << " database has been dropped\n";
         return ERR_SUCCEED;
     });
 
+    cmd(commands, "code", "Get code of the character", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
+        for (const auto& arg : args) {
+            for (const auto& c : arg) {
+                std::cout << (int) c << " ";
+            }
+            std::cout << '\n';
+        }
+        return ERR_SUCCEED;
+    });
+    cmd(commands, "char", "Get char from code", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
+        for (const auto& arg : args) {
+            int code = std::stoi(arg);
+            std::cout << "'" << (char) code << "'\n";
+        }
+        return ERR_SUCCEED;
+    });
 }
 
 void init(I18N& i18n) {
