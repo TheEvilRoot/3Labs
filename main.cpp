@@ -83,6 +83,25 @@ void init(CommandsMap& commands) {
 
         size_t index = handler.handleInput(std::string("Choose employee to do job (0-") + std::to_string(context.employees.size() - 1) + "): ", (size_t) 0, context.employees.size() - 1);
         context.employees[index]->doJob();
+
+        std::cout << "Initiating special actions...\n";
+        auto employee = context.employees[index];
+        Programmer *prg;
+        if ((prg = dynamic_cast<Programmer*>(employee)) != nullptr) {
+            prg->refactorCode();
+            return ERR_SUCCEED;
+        }
+        Designer *dsg;
+        if ((dsg = dynamic_cast<Designer*>(employee)) != nullptr) {
+            dsg->createApplicationIcon();
+            return ERR_SUCCEED;
+        }
+        Tester *tester;
+        if ((tester = dynamic_cast<Tester*>(employee)) != nullptr) {
+            tester->testProduct();
+            return ERR_SUCCEED;
+        }
+
         return ERR_SUCCEED;
     });
 
