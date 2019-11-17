@@ -40,7 +40,6 @@ public:
   }
 
   void toBinaryFile(std::ofstream &file) {
-      // TODO: Check is binary
       if (!file.is_open()) throw std::logic_error("File not opened");
 
       size_t length = binaryLength();
@@ -68,7 +67,6 @@ public:
   }
 
   static Student fromBinary(std::ifstream &file) {
-      // TODO: Check is binary
       if (!file.is_open()) throw std::logic_error("File not opened");
 
       size_t id = 0;
@@ -98,7 +96,6 @@ public:
   }
 
   void toTextFile(std::ofstream &file) {
-      // TODO: Check is text
       if (!file.is_open()) throw std::logic_error("File not opened");
 
       file << id;
@@ -120,7 +117,6 @@ public:
   }
 
   static Student fromText(std::ifstream &file, bool binary = false) {
-      // TODO: Check is text
       if (!file.is_open()) throw std::logic_error("File not opened");
 
       if (binary)
