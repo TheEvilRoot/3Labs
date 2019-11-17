@@ -9,12 +9,7 @@
 #include "api.h"
 #include "student.h"
 
-struct FileContext {
-  std::fstream file;
-  std::string fileName;
-};
-
-typedef std::function<const char(FileContext&, std::vector<std::string>&, InputHandler&)> CommandCallback;
+typedef std::function<const char(std::vector<std::string>&, InputHandler&)> CommandCallback;
 
 struct Command {
   CommandCallback func;
@@ -130,15 +125,19 @@ char readFile(InputHandler& handler, bool reversed, bool binary, const std::func
 }
 
 void init(CommandsMap& commands) {
-    cmd(commands, "help", "Display help message", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler){
+    cmd(commands, "help", "Display help message", [&](std::vector<std::string>& args, InputHandler& handler){
+        std::cout << "Help: \n";
+        for (const auto& [cmdName, cmd] : commands) {
+            std::cout << "\t" << cmdName << " - " << cmd.description << "\n";
+        }
         return ERR_SUCCEED;
     });
 
-    cmd(commands, "exit", "Exit the program", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
+    cmd(commands, "exit", "Exit the program", [&](std::vector<std::string>& args, InputHandler& handler) {
         return ERR_EXIT_CODE;
     });
 
-    cmd(commands, "write", "Write new student to binary database. write -t|-b", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
+    cmd(commands, "write", "Write new student to binary database. write -t|-b", [&](std::vector<std::string>& args, InputHandler& handler) {
         char mode = 0;
         for (const auto& arg : args) {
             if (arg == "-t") mode = 't';
@@ -153,7 +152,7 @@ void init(CommandsMap& commands) {
         return writeFile(handler, mode == 'b');
     });
 
-    cmd(commands, "read", "Read database. read -t|-b|-B -r", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
+    cmd(commands, "read", "Read database. read -t|-b|-B -r", [&](std::vector<std::string>& args, InputHandler& handler) {
         bool reversed = false;
         char mode = 't';
 
@@ -169,7 +168,7 @@ void init(CommandsMap& commands) {
         }, mode == 'b' ? reversedBinary : (mode == 'B' ? reversedTextBinary : reversedText));
     });
 
-    cmd(commands, "drop", "Drop database -t|-b", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
+    cmd(commands, "drop", "Drop database -t|-b", [&](std::vector<std::string>& args, InputHandler& handler) {
         char mode = 't';
 
         for (const auto& arg : args) {
@@ -186,7 +185,7 @@ void init(CommandsMap& commands) {
         return ERR_SUCCEED;
     });
 
-    cmd(commands, "code", "Get code of the character", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
+    cmd(commands, "code", "Get code of the character", [&](std::vector<std::string>& args, InputHandler& handler) {
         for (const auto& arg : args) {
             for (const auto& c : arg) {
                 std::cout << (int) c << " ";
@@ -195,7 +194,7 @@ void init(CommandsMap& commands) {
         }
         return ERR_SUCCEED;
     });
-    cmd(commands, "char", "Get char from code", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler) {
+    cmd(commands, "char", "Get char from code", [&](std::vector<std::string>& args, InputHandler& handler) {
         for (const auto& arg : args) {
             int code = std::stoi(arg);
             std::cout << "'" << (char) code << "'\n";
@@ -215,7 +214,7 @@ void init(I18N& i18n) {
     i18n.insert({ ERR_EXIT_CODE, "Succeed" });
 }
 
-char run(FileContext& context, CommandsMap& commands, int lastExitCode, InputHandler& handler) {
+char run(CommandsMap& commands, int lastExitCode, InputHandler& handler) {
     std::string inString = handler.enterString("[" + std::to_string(lastExitCode) + "] # ");
     if (inString.length() ==  0) return ERR_INPUT_EMPTY;
     std::vector<std::string> tokens = handler.splitString(inString, ' ');
@@ -227,7 +226,7 @@ char run(FileContext& context, CommandsMap& commands, int lastExitCode, InputHan
     auto command = commands[tokens[0]];
     tokens.erase(tokens.begin());
 
-    return command.func(context, tokens, handler);
+    return command.func(tokens, handler);
 }
 
 bool handleExitCode(const char exitCode, int& lastExitCode, I18N& i18n) {
@@ -253,14 +252,13 @@ bool handleExitCode(const char exitCode, int& lastExitCode, I18N& i18n) {
 int main() {
     CommandsMap commands;
     I18N i18n;
-    FileContext context;
     InputHandler handler(i18n);
     int lastExitCode = 0;
 
     init(i18n);
     init(commands);
 
-    while (handleExitCode(run(context, commands, lastExitCode, handler), lastExitCode, i18n));
+    while (handleExitCode(run(commands, lastExitCode, handler), lastExitCode, i18n));
 
     return 0;
 }
