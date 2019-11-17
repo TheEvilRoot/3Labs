@@ -53,7 +53,7 @@ public:
   }
 
   template<typename T>
-  T handleInput(const char *message, T lower, T upper) {
+  T handleInput(const std::string& message, T lower, T upper) {
       std::pair<char, T> res;
 
       while (true) {

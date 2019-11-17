@@ -6,46 +6,11 @@
 #include <string>
 
 #include "api.h"
-
-template<class T>
-class Array {
-private:
-  std::vector<T> data;  // Live is too hard to use pointer based arrays
-                        // for `terminated` and `unexpected` hooks demonstration
-public:
-  explicit Array(size_t initialSize = 0) {
-      data.resize(initialSize);
-  }
-
-  T& operator[](size_t index) throw() {
-      if (index >= data.size()) throw std::range_error(std::to_string(index) + " >= " + std::to_string(data.size()));
-
-      return data[index];
-  }
-
-  size_t push(T t) {
-      data.push_back(t);
-      return data.size() - 1;
-  }
-
-  size_t getSize() {
-      return data.size();
-  }
-};
+#include "employee.h"
 
 struct Context {
-    Array<std::string> array;
+    std::vector<Employee *> employees;
 };
-
-void unexpectedHook() {
-    std::cerr << "\n[UNEXPECTED] Unexpected exception was thrown.\n";
-    std::terminate();
-}
-
-void terminationHook() {
-    std::cerr << "\n[TERMINATION] Unexpected error occurred. Terminating...\n";
-    exit(1);
-}
 
 typedef std::function<const char(Context&, std::vector<std::string>&, InputHandler&)> CommandCallback;
 
@@ -63,45 +28,61 @@ void cmd(CommandsMap &commands, const std::string& name, std::string description
 
 void init(CommandsMap& commands) {
     cmd(commands, "help", "Display help message", [&](Context& context, std::vector<std::string>& args, InputHandler& handler){
+        std::cout << "Help: \n";
+        for (const auto& [cmdName, cmd] : commands) {
+            std::cout << "\t" << cmdName << " - " << cmd.description << "\n";
+        }
         return ERR_SUCCEED;
     });
 
     cmd(commands, "exit", "Exit the program", [&](Context& context, std::vector<std::string>& args, InputHandler& handler) {
         return ERR_EXIT_CODE;
     });
-
-    cmd(commands, "push", "Push new element to array", [&](Context& context, std::vector<std::string>& args, InputHandler& handler) {
-        std::string newElement;
+    cmd(commands, "add", "Add employee", [&](Context& context, std::vector<std::string>& args, InputHandler& handler) -> char {
         if (args.empty()) {
-            newElement = handler.enterString("Enter new element string: ");
-        } else {
-            newElement = args[0];
-        }
-
-        std::cout << "New element added to position " << context.array.push(newElement) << "\n";
-        return ERR_SUCCEED;
-    });
-
-    cmd(commands, "get", "Get element from array by index", [&](Context& context, std::vector<std::string>& args, InputHandler& handler) -> char{
-        if (args.empty()) {
-            std::cout << "You should provide index to get element\n";
+            std::cout << "You should pass type of employee: programmer, designer or tester\n";
             return ERR_INVALID_ARGS;
         }
 
-        size_t index = std::atol(args[0].c_str());
-        std::cout << "Getting " << index << " element...";
+        auto type = args[0];
+        Employee *employee;
+        if (type == "programmer") {
+            employee = new Programmer(handler);
+        } else if (type == "designer") {
+            employee = new Designer(handler);
+        } else if (type == "tester") {
+            employee = new Tester(handler);
+        } else {
+            std::cout << "Invalid type: " << type << ". Use programmer, designer or tester to add one\n";
+            return ERR_INVALID_ARGS;
+        }
 
-        std::string el = context.array[index];
-        std::cout << " " << el << "\n";
+        context.employees.push_back(employee);
         return ERR_SUCCEED;
     });
-
-    cmd (commands, "size", "Get size of the array", [&](Context& context, std::vector<std::string>& args, InputHandler& handler) {
-        if (context.array.getSize() == 0){
-            std::cout << "Array is empty\n";
+    cmd(commands, "list", "Print all employees", [&](Context& context, std::vector<std::string>& args, InputHandler& handler) -> char {
+        if (context.employees.empty()) {
+            std::cout << "There's no employees. What we gonna do now? (⊙_◎)\n";
         } else {
-            std::cout << "Size of the array: " << context.array.getSize() << "\n";
+            std::cout << "Employees: \n";
+            for (const auto& emp: context.employees) {
+                std::cout << "\t" << emp->toString() << "\n";
+            }
         }
+        return ERR_SUCCEED;
+    });
+    cmd(commands, "work", "Make some employee do their jobs", [&](Context& context, std::vector<std::string>& args, InputHandler& handler) -> char {
+        if (context.employees.empty()) {
+          std::cout << "There's no employees. What we gonna do now? (⊙_◎)\n";
+          return ERR_SUCCEED;
+        }
+
+        for (size_t i = 0; i < context.employees.size(); i++) {
+            std::cout << i << ". " << context.employees[i]->toString() << "\n";
+        }
+
+        size_t index = handler.handleInput(std::string("Choose employee to do job (0-") + std::to_string(context.employees.size() - 1) + "): ", (size_t) 0, context.employees.size() - 1);
+        context.employees[index]->doJob();
         return ERR_SUCCEED;
     });
 
@@ -154,9 +135,6 @@ bool handleExitCode(const char exitCode, int& lastExitCode, I18N& i18n) {
 }
 
 int main() {
-    std::set_unexpected(unexpectedHook);
-    std::set_terminate(terminationHook);
-
     CommandsMap commands;
     I18N i18n;
     Context context;
