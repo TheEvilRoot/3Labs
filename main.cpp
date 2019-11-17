@@ -42,6 +42,10 @@ bool writeToOutFile(const std::string& content) {
 
 void init(CommandsMap& commands) {
     cmd(commands, "help", "Display help message", [&](FileContext& context, std::vector<std::string>& args, InputHandler& handler){
+        std::cout << "Help: \n";
+        for (const auto& [cmdName, cmd] : commands) {
+            std::cout << "\t" << cmdName << " - " << cmd.description << "\n";
+        }
         return ERR_SUCCEED;
     });
 
