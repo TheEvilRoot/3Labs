@@ -29,7 +29,7 @@ char writeFile(InputHandler& handler, bool binary) {
 
     std::cout << "Writing student \n" << st << "\n ... to " <<  (binary ? "binary" : "text") << " database\n";
 
-    std::ofstream file(std::string("database.") + (binary ? "bin" : "txt"), (binary ? std::ios::binary : 0) | std::ios::app);
+    std::ofstream file(std::string("database.") + (binary ? "bin" : "txt"), (binary ? std::ios::binary | std::ios::app: std::ios::app));
 
     if(!file.is_open()) {
         std::cout << "Unable to open file...\n";
@@ -199,6 +199,10 @@ void init(CommandsMap& commands) {
             int code = std::stoi(arg);
             std::cout << "'" << (char) code << "'\n";
         }
+        return ERR_SUCCEED;
+    });
+    cmd(commands, "clear", "Clear", [&](std::vector<std::string>& args, InputHandler& handler) {
+        system("clear");
         return ERR_SUCCEED;
     });
 }

@@ -3,6 +3,7 @@
 #include <utility>
 #include <vector>
 #include <string>
+#include <cstring>
 
 #include <fstream>
 
@@ -77,22 +78,24 @@ public:
       file.read((char *) &nameLength, sizeof(size_t));
       if (file.eof()) throw std::range_error("Unexpected eof while reading student");
 
-      char *nameBytes = new char[nameLength];
+      char *nameBytes = new char[nameLength + 1];
       file.read(nameBytes, nameLength);
+      nameBytes[nameLength] = '\0';
       if (file.eof()) throw std::range_error("Unexpected eof while reading student");
 
       size_t facLength = 0;
       file.read((char *) &facLength, sizeof(size_t));
       if (file.eof()) throw std::range_error("Unexpected eof while reading student");
 
-      char *facBytes = new char[facLength];
+      char *facBytes = new char[facLength + 1];
       file.read(facBytes, facLength);
+      facBytes[facLength] = '\0';
       if (file.eof()) throw std::range_error("Unexpected eof while reading student");
 
       size_t semester = 0;
       file.read((char *) &semester, sizeof(semester));
 
-      return Student(id, std::string(nameBytes) + '\0', std::string(facBytes) + '\0', semester);
+      return Student(id, std::string(nameBytes), std::string(facBytes), semester);
   }
 
   void toTextFile(std::ofstream &file) {
