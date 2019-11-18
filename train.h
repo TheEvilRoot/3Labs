@@ -3,6 +3,7 @@
 #include <utility>
 #include <vector>
 #include <string>
+#include <sstream>
 #include "api.h"
 
 namespace Railway {
@@ -18,6 +19,11 @@ namespace Railway {
         this->model = handler.enterString("Enter model of engine: ");
         this->cylinders = handler.handleInput("Enter number of cylinders of engine: ", 1, 100);
     }
+
+    std::string toString() {
+        return "Engine (" + model + " " + std::to_string(cylinders) + " cylinders" + ")";
+
+    }
   };
 
   class Driver {
@@ -29,9 +35,8 @@ namespace Railway {
         this->name = handler.enterString("Enter driver's name: ");
     }
 
-    friend std::ostream& operator>>(std::ostream& out, Driver& driver) {
-        out << "Driver (" << driver.name << ")";
-        return out;
+    std::string toString() {
+        return "Driver (" + name + ")";
     }
   };
 
@@ -44,14 +49,15 @@ namespace Railway {
     explicit Conductor(InputHandler& handler) {
         this->name = handler.enterString("Enter conductor's name: ");
     }
+
+    std::string toString() {
+        return "Conductor (" + name + ")";
+    }
   };
 
   class Vehicle {
-  private:
-    size_t seats;
-
   public:
-    explicit Vehicle(size_t s): seats(s) {}
+    explicit Vehicle() {}
     ~Vehicle() = default;
   };
 
@@ -61,6 +67,10 @@ namespace Railway {
   public:
     explicit RailwayCarriage(Conductor* cond): conductor(cond) {}
     ~RailwayCarriage() = default;
+
+    std::string toString() {
+        return "RailwayCarriage\n\t\t" + conductor->toString();
+    }
   };
 
   class Locomotive {
@@ -69,7 +79,23 @@ namespace Railway {
     Engine engine;
   public:
     explicit Locomotive(Driver* driver, Engine engine) : driver(driver), engine(std::move(engine)) {}
+    explicit Locomotive(std::vector<Driver *>& drivers, InputHandler& handler): engine(Engine(handler)) {
+        // asserts drivers.size() > 0
+        if (drivers.size() > 1){
+            std::cout << "Which driver use for this locomotive: \n";
+            for (const auto& d : drivers) {
+                std::cout << "\t" << d << "\n";
+            }
+            this->driver = drivers[handler.enterIndexOf("(0-" + std::to_string(drivers.size() - 1) + ") > ", drivers)];
+        } else {
+            this->driver = drivers[0];
+        }
+    }
     ~Locomotive() = default;
+
+    std::string toString() {
+        return "Locomotive \n\t\t" + driver->toString() + "\n\t\t" + engine.toString();
+    }
   };
 
   class Train: public Vehicle {
@@ -77,8 +103,21 @@ namespace Railway {
     std::vector<RailwayCarriage *> carriages;
     Locomotive* locomotive;
   public:
-    explicit Train(size_t seats, Locomotive *loc, std::vector<RailwayCarriage *> cars): Vehicle(seats), locomotive(loc), carriages(cars) {}
+    explicit Train(Locomotive *loc, std::vector<RailwayCarriage *>& cars): locomotive(loc) {
+        for(auto c : cars) { carriages.push_back(c); }
+    }
     ~Train() = default;
+
+    std::string toString() {
+        std::ostringstream str;
+        str << "Train\n";
+        str << "\t" << locomotive->toString() << "\n";
+
+        for (const auto& c : carriages) {
+            str << "\t" << c->toString() << "\n";
+        }
+        return str.str();
+    }
   };
 
 }

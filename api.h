@@ -53,7 +53,7 @@ public:
   }
 
   template<typename T>
-  T handleInput(const char *message, T lower, T upper) {
+  T handleInput(const std::string& message, T lower, T upper) {
       std::pair<char, T> res;
 
       while (true) {
@@ -94,6 +94,11 @@ public:
       }
       ret.push_back(source.substr(prevPos, pos - prevPos));
       return ret;
+  }
+
+  template<typename T>
+  size_t enterIndexOf(const std::string& message, std::vector<T>& from) {
+      return handleInput(message, (size_t) 0, from.size() - 1);
   }
 
 };
