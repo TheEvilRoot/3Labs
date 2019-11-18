@@ -11,7 +11,7 @@ class StackUnderflow: public std::exception { };
 
 template<class T>
 struct StackNode {
-  StackNode<T> *next;
+  StackNode<T> *next = nullptr;
   T data;
 };
 
@@ -33,7 +33,7 @@ public:
   }
 
   T pop() {
-    if (top == nullptr) throw StackUnderflow();
+    if (empty()) throw StackUnderflow();
 
     T ret = top->data;
     top = top->next;
@@ -43,7 +43,7 @@ public:
   }
 
   bool empty() {
-      return size == 0;
+      return size == 0 || top == nullptr;
   }
 
 };
@@ -68,6 +68,10 @@ void cmd(CommandsMap &commands, const std::string& name, std::string description
 
 void init(CommandsMap& commands) {
     cmd(commands, "help", "Display help message", [&](Context& context, std::vector<std::string>& args, InputHandler& handler){
+        std::cout << "Help: \n";
+        for (const auto& [cmdName, cmd] : commands) {
+            std::cout << "\t" << cmdName << " - " << cmd.description << "\n";
+        }
         return ERR_SUCCEED;
     });
 
