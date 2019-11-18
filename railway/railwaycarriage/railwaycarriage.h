@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "conductor.h"
+#include "../conductor/conductor.h"
 
 namespace RailWay {
 

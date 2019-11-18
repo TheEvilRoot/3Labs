@@ -4,10 +4,10 @@
 #include <string>
 #include <sstream>
 
-#include "../api.h"
-#include "vehicle.h"
-#include "railwaycarriage.h"
-#include "locomotive.h"
+#include "../../api.h"
+#include "../vehicle/vehicle.h"
+#include "../railwaycarriage/railwaycarriage.h"
+#include "../locomotive/locomotive.h"
 
 namespace RailWay {
 

@@ -7,7 +7,7 @@
 #include <string>
 
 #include "api.h"
-#include "railway/train.h"
+#include "railway/train/train.h"
 
 using namespace RailWay;
 

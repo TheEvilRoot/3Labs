@@ -8,3 +8,10 @@ cmake-build-debug/
 !dev
 !CMakeLists.txt
 !railway
+!railway/conductor
+!railway/driver
+!railway/engine
+!railway/locomotive
+!railway/vehicle
+!railway/railwaycarriage
+!railway/train
