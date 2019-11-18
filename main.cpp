@@ -7,9 +7,9 @@
 #include <string>
 
 #include "api.h"
-#include "train.h"
+#include "railway/train.h"
 
-using namespace Railway;
+using namespace RailWay;
 
 struct Context {
   std::vector<Driver *> drivers;
